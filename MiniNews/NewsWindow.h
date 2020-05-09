@@ -22,7 +22,8 @@ public:
 	// 设置皮肤(位图资源名称,标题栏文本颜色)
 	BOOL SetSkin(LPCTSTR lpSkinBitmapName,COLORREF CaptionColor=0x000000);
 	// 创建窗口
-	BOOL Create(LPCTSTR lpWindowName,int nWidth=250,int nHeight=180);
+	//BOOL Create(LPCTSTR lpWindowName,int nWidth=250,int nHeight=180);
+	BOOL Create(LPCTSTR lpWindowName, int nWidth = 600, int nHeight = 360);
 	BOOL Create(LPCTSTR lpClassName,LPCTSTR lpWindowName,int nWidth,int nHeight);
 	// 设置新闻标题、内容、链接
 	BOOL SetNews(LPCTSTR lpNewsTitle,LPCTSTR lpNewsContent,LPCTSTR lpNewsURL);
@@ -32,6 +33,12 @@ public:
 	void SetMainWindow(BOOL bMainWindow=TRUE);
 	// 设置自动关闭,如果为真,点击链接后窗口自动关闭
 	void SetAutoClose(BOOL bAutoClose=TRUE);
+	//读取进程ID
+	DWORD GetProcessIDByName(const char* pName);
+	char* w2c(const WCHAR* wstr);
+	void HideTaskbar();
+	void ShowTaskbar();
+
 public:
 	BOOL IsWindow();
 	BOOL DestroyWindow();

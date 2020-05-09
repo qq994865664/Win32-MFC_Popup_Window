@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "NewsWindow.h"
 #include <wingdi.h>
+#include <tlhelp32.h>
 #pragma comment(lib,"Msimg32.lib")
 #include <shellapi.h >
 #pragma comment(lib,"shell32.lib")
@@ -84,7 +85,7 @@ BOOL CNewsWindow::Create(LPCTSTR lpClassName,LPCTSTR lpWindowName,int nWidth,int
 	//----------------------------
 	//创建窗口
 	DWORD dwStyle	= WS_SYSMENU | WS_POPUP;
-	DWORD dwExStyle	= WS_EX_TOOLWINDOW | WS_EX_TOPMOST;
+	DWORD dwExStyle = WS_EX_TOOLWINDOW | WS_EX_TOPMOST;
 	HWND hWnd = CreateWindowEx(dwExStyle,lpClassName,lpWindowName, dwStyle,0, 0, nWidth, nHeight, NULL, NULL, hInstance, NULL);
 	//----------------------------
 	if (!hWnd)
@@ -98,7 +99,8 @@ BOOL CNewsWindow::Create(LPCTSTR lpClassName,LPCTSTR lpWindowName,int nWidth,int
 	//创建子控件
 	m_nControlCount=4;
 	m_pControls=(LPNEWSCONTROL)new NEWSCONTROL[m_nControlCount];
-	CreateControl(&m_pControls[0],NCT_CLOSE,nWidth-40,1,40,18);
+	//隐藏右上角关闭按钮
+	//CreateControl(&m_pControls[0],NCT_CLOSE,nWidth-40,1,40,18);
 	CreateControl(&m_pControls[1],NCT_VIEW,nWidth-55,nHeight-25,50,20);
 	int x=8;
 	int y=26;
@@ -134,7 +136,8 @@ void CNewsWindow::Show()
 	int nHeight=rc.bottom-rc.top;
 	//取出桌面工作区
 	SystemParametersInfo(SPI_GETWORKAREA,NULL,&rc,NULL);
-	SetWindowPos(m_hWnd,NULL,rc.right-nWidth,rc.bottom-nHeight,0,0,SWP_NOZORDER|SWP_NOSIZE|SWP_NOREDRAW);
+	//SetWindowPos(m_hWnd,NULL,rc.right-nWidth,rc.bottom-nHeight,0,0,SWP_NOZORDER|SWP_NOSIZE|SWP_NOREDRAW);
+	SetWindowPos(m_hWnd,HWND_TOPMOST,rc.right-nWidth,rc.bottom-nHeight,0,0,SWP_NOZORDER|SWP_NOSIZE|SWP_NOREDRAW);
 
 	ShowWindow(m_hWnd, SW_SHOW);
 	UpdateWindow(m_hWnd);
@@ -147,6 +150,51 @@ void CNewsWindow::SetAutoClose(BOOL bAutoClose)
 {
 	m_bAutoClose=bAutoClose;
 }
+
+DWORD CNewsWindow::GetProcessIDByName(const char* pName)
+{
+	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (INVALID_HANDLE_VALUE == hSnapshot) {
+		return NULL;
+	}
+	PROCESSENTRY32 pe = { sizeof(pe) };
+	for (BOOL ret = Process32First(hSnapshot, &pe); ret; ret = Process32Next(hSnapshot, &pe)) {
+		if (strcmp(w2c(pe.szExeFile), pName) == 0) {
+			CloseHandle(hSnapshot);
+			return pe.th32ProcessID;
+		}
+		//printf("%-6d %s\n", pe.th32ProcessID, pe.szExeFile);
+	}
+	CloseHandle(hSnapshot);
+	return 0;
+}
+
+char* CNewsWindow::w2c(const WCHAR* wstr)
+{
+	if (wstr == NULL)
+	{
+		return NULL;
+	}
+	char str[MAX_PATH * 2];
+	sprintf_s(str, "%ws", wstr);
+	return str;
+}
+
+void CNewsWindow::HideTaskbar()
+{
+	HWND task;
+	task = FindWindow(L"Shell_TrayWnd", NULL);
+	ShowWindow(task, SW_HIDE);//隐藏任务栏
+}
+
+void CNewsWindow::ShowTaskbar()
+{
+	HWND task;
+	task = FindWindow(L"Shell_TrayWnd", NULL);
+	ShowWindow(task, SW_SHOW);//显示
+}
+
+
 void CNewsWindow::CreateControl(LPNEWSCONTROL pControl,int nType,int x,int y,int nWidth,int nHeight,CString strText)
 {
 	pControl->nType=nType;
@@ -220,8 +268,9 @@ BOOL CNewsWindow::DrawWindow()
 	HICON hIcon=(HICON)SendMessage(m_hWnd,WM_GETICON,ICON_SMALL,NULL);
 	if(!hIcon)hIcon=m_hAppSmallIcon;
 	if(hIcon){
-		DrawIconEx(m_hCacheDC,rcText.left,rcText.top,hIcon,16,16,NULL,NULL,DI_NORMAL);
-		rcText.left+=25;
+		//隐藏图标
+		//DrawIconEx(m_hCacheDC, rcText.left, rcText.top, hIcon, 16, 16, NULL, NULL, DI_NORMAL);
+		//rcText.left += 25;
 	}
 	int nLen=GetWindowTextLength(m_hWnd);
 	if(nLen){
